@@ -72,6 +72,20 @@ fn subgame_won(subgame: &Subgame) -> Piece {
     Piece::None
 }
 
+fn subgame_is_draw(subgame: &Subgame) -> bool {
+    for win in WINS {
+        let a = &subgame[win[0].0][win[0].1];
+        let b = &subgame[win[1].0][win[1].1];
+        let c = &subgame[win[2].0][win[2].1];
+        let all = [a, b, c];
+
+        if !(all.contains(&&Piece::X) && all.contains(&&Piece::O)) {
+            return false;
+        }
+    }
+    true
+}
+
 fn game_won(game: &Game) -> Piece {
     for win in WINS {
         let a = subgame_won(&game[win[0].0][win[0].1]);
@@ -84,6 +98,19 @@ fn game_won(game: &Game) -> Piece {
     Piece::None
 }
 
+fn game_is_draw(game: &Game) -> bool {
+    for win in WINS {
+        let a = subgame_is_draw(&game[win[0].0][win[0].1]);
+        let b = subgame_is_draw(&game[win[1].0][win[1].1]);
+        let c = subgame_is_draw(&game[win[2].0][win[2].1]);
+
+        if a == false && a == b && a == c {
+            return false;
+        }
+    }
+    true
+}
+
 fn print_game(game: &Game, active: &Option<(usize, usize)>) {
     let show_active = active.is_some();
     let (active_x, active_y) = match active {
@@ -92,20 +119,36 @@ fn print_game(game: &Game, active: &Option<(usize, usize)>) {
     };
 
     println!("{}", "\n".repeat(100));
-    println!("     a   b   c     d   e   f     g   h   i");
+    if show_active && active_x == 0 {
+        println!("     a   b   c");
+    } else if show_active && active_x == 1 {
+        println!("                   d   e   f");
+    } else if show_active && active_x == 2 {
+        println!("                                 g   h   i");
+    } else {
+        println!("     a   b   c     d   e   f     g   h   i");
+    }
     println!("   +---+---+---+ +---+---+---+ +---+---+---+");
     for y in 0..9 {
-        print!(" {} |", y + 1);
+        
         //print!("   |");
         let y0 = y % 3;
         let y1 = y / 3;
+        if show_active == false || y1 == active_y {
+            print!(" {} |", y + 1);
+        } else {
+            print!("   |");
+        }
+            
         for x in 0..9 {
             let x0 = x % 3;
             let x1 = x / 3;
 
             let winner = subgame_won(&game[x1][y1]);
 
-            if winner == Piece::None {
+            if subgame_is_draw(&game[x1][y1]) {
+                print!(" ⋅ ");
+            } else if winner == Piece::None {
                 let piece = game[x1][y1][x0][y0];
                 print!(" {piece} ");
             } else if winner == Piece::X {
@@ -287,9 +330,16 @@ fn main() {
         let won = subgame_won(&game[x1][y1]);
         if won != Piece::None {
             message = Some(format!(
-                    "Invalid move! That position ({input_text}) is within a game that has already been won!"
-                ));
-                continue;
+                "Invalid move! That position ({input_text}) is within a game that has already been won!"
+            ));
+            continue;
+        }
+
+        if subgame_is_draw(&game[x1][y1]) {
+            message = Some(format!(
+                "Invalid move! That position ({input_text}) is within a game that has already been drawn!"
+            ));
+            continue;
         }
 
         if active.is_some() {
@@ -313,14 +363,19 @@ fn main() {
         game[x1][y1][x0][y0] = turn.clone();
 
         let won = subgame_won(&game[x0][y0]);
-        if won == Piece::None {
+        if won == Piece::None && !subgame_is_draw(&game[x0][y0]) {
             active = Some((x0, y0));
         } else {
             active = None;
         }
 
-        if game_won(&game) != Piece::None {
-            print_game(&game, &active);
+        if game_is_draw(&game) {
+            print_game(&game, &None);
+
+            println!("It's a draw!");
+            exit(0);
+        } else if game_won(&game) != Piece::None {
+            print_game(&game, &None);
 
             println!("{turn} wins!");
             exit(0);
