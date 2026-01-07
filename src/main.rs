@@ -1,6 +1,7 @@
 use std::{
     fmt::{Display, format},
-    io, process::exit,
+    io,
+    process::exit,
 };
 
 const RESET: &str = "\x1b[0m";
@@ -29,19 +30,6 @@ enum Piece {
     O,
 }
 
-impl Piece {
-    fn random() -> Self {
-        let rand: u8 = rand::random();
-
-        match rand % 3 {
-            0 => Self::None,
-            1 => Self::X,
-            2 => Self::O,
-            _ => unreachable!(),
-        }
-    }
-}
-
 impl Display for Piece {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
@@ -68,28 +56,8 @@ fn new_empty_subgame() -> Subgame {
     [[Piece::None; 3]; 3]
 }
 
-fn new_random_subgame() -> Subgame {
-    let mut subgame = new_empty_subgame();
-
-    for i in 0..9 {
-        subgame[i % 3][i / 3] = Piece::random();
-    }
-
-    subgame
-}
-
 fn new_game() -> Game {
     [[new_empty_subgame(); 3]; 3]
-}
-
-fn new_random_game() -> Game {
-    let mut game = new_game();
-
-    for i in 0..9 {
-        game[i % 3][i / 3] = new_random_subgame();
-    }
-
-    game
 }
 
 fn subgame_won(subgame: &Subgame) -> Piece {
@@ -164,7 +132,9 @@ fn print_game(game: &Game, active: &Option<(usize, usize)>) {
             }
 
             if x0 < 2 {
-                if subgame_won(&game[x1][y1]) == Piece::None && (!show_active || (active_x == x1 && active_y == y1)) {
+                if subgame_won(&game[x1][y1]) == Piece::None
+                    && (!show_active || (active_x == x1 && active_y == y1))
+                {
                     print!("|");
                 } else {
                     print!(" ");
@@ -214,7 +184,7 @@ fn print_game(game: &Game, active: &Option<(usize, usize)>) {
                     let x0 = x % 3;
                     let x1 = x / 3;
 
-                    if !show_active || (((active_x == x1 && active_y == y1) || y0 == 2)) {
+                    if !show_active || ((active_x == x1 && active_y == y1) || y0 == 2) {
                         print!("---");
                     } else {
                         print!("   ");
@@ -248,7 +218,7 @@ fn move_min(active: &Option<(usize, usize)>) -> (usize, usize) {
 }
 
 fn pos_as_string(pos: &(usize, usize)) -> String {
-    format!("{}{}", FILES[pos.1], pos.0 + 1)
+    format!("{}{}", FILES[pos.0], pos.1 + 1)
 }
 
 fn string_as_pos(pos: &str) -> Option<(usize, usize)> {
@@ -262,13 +232,9 @@ fn string_as_pos(pos: &str) -> Option<(usize, usize)> {
         let file_i = FILES
             .iter()
             .enumerate()
-            .find_map(|(i, f)| if f == &file {
-                Some(i)
-            } else {
-                None
-            });
+            .find_map(|(i, f)| if f == &file { Some(i) } else { None });
         let rank_i = rank.to_digit(10);
-        if rank_i.is_none() || file_i.is_none() || rank_i.unwrap() < 1{
+        if rank_i.is_none() || file_i.is_none() || rank_i.unwrap() < 1 {
             return None;
         }
 
@@ -304,9 +270,11 @@ fn main() {
         input_text = input_text.trim().to_string();
 
         let pos = string_as_pos(&input_text);
-        
+
         if pos.is_none() {
-            message = Some(format!("Invalid move! That position ({input_text}) is not within the game boundaries!"));
+            message = Some(format!(
+                "Invalid move! That position ({input_text}) is not within the game boundaries!"
+            ));
             continue;
         }
 
@@ -316,26 +284,38 @@ fn main() {
         let x1 = x / 3;
         let y1 = y / 3;
 
+        let won = subgame_won(&game[x1][y1]);
+        if won != Piece::None {
+            message = Some(format!(
+                    "Invalid move! That position ({input_text}) is within a game that has already been won!"
+                ));
+                continue;
+        }
+
         if active.is_some() {
             let (ax, ay) = active.unwrap();
             if x1 != ax || y1 != ay {
-                message = Some(format!("Invalid move! That position ({input_text}) is not within the current active game!"));
+                message = Some(format!(
+                    "Invalid move! That position ({input_text}) is not within the current active game!"
+                ));
                 continue;
             }
-        } else {
-            active = Some((x1, y1));
         }
 
         let piece = game[x1][y1][x0][y0];
         if piece != Piece::None {
-            message = Some(format!("Invalid move! There is already a piece at that position ({input_text})!"));
+            message = Some(format!(
+                "Invalid move! There is already a piece at that position ({input_text})!"
+            ));
             continue;
         }
 
         game[x1][y1][x0][y0] = turn.clone();
 
-        let won = subgame_won(&game[x1][y1]);
-        if won == turn {
+        let won = subgame_won(&game[x0][y0]);
+        if won == Piece::None {
+            active = Some((x0, y0));
+        } else {
             active = None;
         }
 
