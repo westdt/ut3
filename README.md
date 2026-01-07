@@ -32,3 +32,6 @@ Currently there are no dependencies. If you have Rust installed, you can simply 
 - [x] Minor TUI changes to make it more clear what moves are available
 - [ ] Primitive AI so people can play alone
 - [ ] Simple LAN multiplayer mode
+
+## Pronounciation
+You may prounounce tut3 as "tut three" or "tute". I personally call it "tute" as I think it is very funny.
