@@ -30,7 +30,7 @@ If you see weird characters on the screen, it is probably due to the ANSI colors
 Currently there are no dependencies. If you have Rust installed, you can simply download the project and run `cargo run`.
 
 ## Future Features
-- [ ] Draws (I somehow entirely forgot to code this)
-- [ ] Minor TUI changes to make it more clear what moves are available
+- [x] Draws (I somehow entirely forgot to code this originally)
+- [x] Minor TUI changes to make it more clear what moves are available
 - [ ] Primitive AI so people can play alone
 - [ ] Simple LAN multiplayer mode
